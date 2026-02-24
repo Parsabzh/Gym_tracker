@@ -1,44 +1,45 @@
 {% extends "base.html" %}
-{% block title %}IronLog — Dashboard{% endblock %}
-
+{% block title %}IronLog{% endblock %}
 {% block body %}
 <div id="app">
 
-  <!-- Header -->
   <header class="app-header">
     <div class="header-inner">
       <div class="app-logo">IRON<span>LOG</span></div>
       <div class="header-right">
         <span class="user-badge">{{ username }}</span>
         <a href="/logout" class="logout-btn" title="Logout">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Tab bar -->
   <nav class="tab-bar">
-    <button class="tab active" onclick="switchTab('workout')" id="tab-workout">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
-      Workout
+    <button class="tab active" onclick="switchTab('session')" id="tab-session">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
+      Session
     </button>
     <button class="tab" onclick="switchTab('history')" id="tab-history">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-4"/><path d="M3 3v4h4"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-4"/><path d="M3 3v4h4"/></svg>
       History
     </button>
     <button class="tab" onclick="switchTab('bodyweight')" id="tab-bodyweight">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
       Weight
+    </button>
+    <button class="tab" onclick="switchTab('forge')" id="tab-forge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      FORGE
     </button>
   </nav>
 
-  <!-- ══ WORKOUT TAB ══ -->
-  <div id="view-workout" class="view active">
+  <!-- ══ SESSION TAB ══ -->
+  <div id="view-session" class="view active">
 
     <!-- Active session banner -->
     <div class="active-banner" id="active-banner">
@@ -47,69 +48,122 @@
         <div class="banner-title">SESSION ACTIVE</div>
         <div class="banner-sub" id="session-label">—</div>
       </div>
-      <button class="end-btn" onclick="endSession()">End</button>
+      <button class="end-btn" onclick="openEndModal()">End Session</button>
     </div>
 
-    <!-- Start session card -->
+    <!-- Start session -->
     <div class="card" id="start-card">
-      <div class="card-header">
-        <div class="card-title">New Session</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date</label>
-        <input type="date" id="session-date" class="form-input">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes <span class="optional">optional</span></label>
-        <input type="text" id="session-notes" class="form-input" placeholder="Push day, leg day…">
+      <div class="card-header"><div class="card-title">New Session</div></div>
+      <div class="set-grid-2">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="session-date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes <span class="optional">optional</span></label>
+          <input type="text" id="session-notes" class="form-input" placeholder="Push day…">
+        </div>
       </div>
       <button class="btn-primary w-full" onclick="startSession()">Start Session</button>
     </div>
 
-    <!-- Log set card -->
-    <div class="card" id="log-card" style="display:none">
-      <div class="card-header">
-        <div class="card-title">Log Set</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Exercise</label>
-        <select id="exercise-select" class="form-input"></select>
-      </div>
-      <button class="btn-ghost btn-sm" onclick="openExerciseModal()" style="margin-top:6px;margin-bottom:4px">+ Add Custom Exercise</button>
-      <div class="set-grid">
-        <div class="form-group">
-          <label class="form-label">Set #</label>
-          <input type="number" id="set-number" class="form-input text-center" value="1" min="1">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reps</label>
-          <input type="number" id="set-reps" class="form-input text-center" placeholder="10">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Weight (kg)</label>
-          <input type="number" id="set-weight" class="form-input text-center" placeholder="60" step="0.5">
-        </div>
-      </div>
-      <div class="set-grid-2">
-        <div class="form-group">
-          <label class="form-label">Rest (sec)</label>
-          <input type="number" id="set-rest" class="form-input text-center" placeholder="90">
-        </div>
-        <div class="form-group">
-          <label class="form-label">RPE (1–10)</label>
-          <input type="number" id="set-rpe" class="form-input text-center" placeholder="7" min="1" max="10" step="0.5">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes <span class="optional">optional</span></label>
-        <input type="text" id="set-notes" class="form-input" placeholder="Felt heavy, paused reps…">
-      </div>
-      <button class="btn-primary w-full" onclick="logSet()">+ Add Set</button>
-    </div>
+    <!-- Active session: strength + cardio panels -->
+    <div id="session-panels" style="display:none">
 
-    <!-- Current session sets display -->
-    <div id="current-sets"></div>
+      <!-- Panel toggle -->
+      <div class="panel-toggle">
+        <button class="ptab active" id="ptab-lift" onclick="switchPanel('lift')">🏋️ Lift</button>
+        <button class="ptab" id="ptab-cardio" onclick="switchPanel('cardio')">🏃 Cardio</button>
+      </div>
 
+      <!-- Lift panel -->
+      <div id="panel-lift">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Log Set</div></div>
+          <div class="form-group">
+            <label class="form-label">Exercise</label>
+            <select id="exercise-select" class="form-input"></select>
+          </div>
+          <button class="btn-ghost btn-sm" onclick="openExerciseModal()" style="margin-top:4px;margin-bottom:8px">+ Custom Exercise</button>
+          <div class="set-grid">
+            <div class="form-group">
+              <label class="form-label">Set #</label>
+              <input type="number" id="set-number" class="form-input text-center" value="1" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reps</label>
+              <input type="number" id="set-reps" class="form-input text-center" placeholder="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Weight (kg)</label>
+              <input type="number" id="set-weight" class="form-input text-center" placeholder="60" step="0.5">
+            </div>
+          </div>
+          <div class="set-grid-2">
+            <div class="form-group">
+              <label class="form-label">Rest (sec)</label>
+              <input type="number" id="set-rest" class="form-input text-center" placeholder="90">
+            </div>
+            <div class="form-group">
+              <label class="form-label">RPE (1–10)</label>
+              <input type="number" id="set-rpe" class="form-input text-center" placeholder="7" step="0.5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes <span class="optional">optional</span></label>
+            <input type="text" id="set-notes" class="form-input" placeholder="Paused reps…">
+          </div>
+          <button class="btn-primary w-full" onclick="logSet()">+ Add Set</button>
+        </div>
+        <div id="current-sets"></div>
+      </div>
+
+      <!-- Cardio panel -->
+      <div id="panel-cardio" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Log Cardio</div></div>
+          <div class="set-grid-2">
+            <div class="form-group">
+              <label class="form-label">Activity</label>
+              <select id="cardio-type" class="form-input">
+                <option value="running">🏃 Running</option>
+                <option value="walking">🚶 Walking</option>
+                <option value="cycling">🚴 Cycling</option>
+                <option value="rowing">🚣 Rowing</option>
+                <option value="swimming">🏊 Swimming</option>
+                <option value="other">⚡ Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Avg Heart Rate</label>
+              <input type="number" id="cardio-hr" class="form-input text-center" placeholder="145 bpm">
+            </div>
+          </div>
+          <div class="set-grid">
+            <div class="form-group">
+              <label class="form-label">Distance (km)</label>
+              <input type="number" id="cardio-distance" class="form-input text-center" placeholder="5.0" step="0.1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (min)</label>
+              <input type="number" id="cardio-duration" class="form-input text-center" placeholder="30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Elevation (m)</label>
+              <input type="number" id="cardio-elevation" class="form-input text-center" placeholder="0">
+            </div>
+          </div>
+          <div id="pace-preview" class="pace-display" style="display:none"></div>
+          <div class="form-group">
+            <label class="form-label">Notes <span class="optional">optional</span></label>
+            <input type="text" id="cardio-notes" class="form-input" placeholder="Morning run, hilly…">
+          </div>
+          <button class="btn-primary w-full" onclick="logCardio()">+ Add Cardio</button>
+        </div>
+        <div id="current-cardio"></div>
+      </div>
+
+    </div><!-- /session-panels -->
   </div>
 
   <!-- ══ HISTORY TAB ══ -->
@@ -143,10 +197,77 @@
     </div>
   </div>
 
+  <!-- ══ FORGE TAB ══ -->
+  <div id="view-forge" class="view">
+    <div class="forge-header">
+      <div class="forge-title">FORGE</div>
+      <div class="forge-sub">Your data. Forged into insight.</div>
+    </div>
+
+    <div id="stat-pills" class="stat-pills"></div>
+
+    <!-- Workout heatmap -->
+    <div class="chart-card">
+      <div class="chart-title">📅 Workout Heatmap — Last 6 Months</div>
+      <div id="heatmap-container" class="heatmap-wrap"></div>
+    </div>
+
+    <!-- Weekly volume -->
+    <div class="chart-card">
+      <div class="chart-title">⚡ Weekly Volume (kg lifted)</div>
+      <div class="chart-wrap"><canvas id="chart-volume"></canvas></div>
+    </div>
+
+    <!-- Calories burned per session -->
+    <div class="chart-card">
+      <div class="chart-title">🔥 Calories Burned per Session</div>
+      <div class="chart-wrap"><canvas id="chart-calories"></canvas></div>
+    </div>
+
+    <!-- Body weight trend -->
+    <div class="chart-card">
+      <div class="chart-title">⚖️ Body Weight Trend</div>
+      <div class="chart-wrap"><canvas id="chart-bw"></canvas></div>
+    </div>
+
+    <!-- Per-exercise weight progression (dynamic) -->
+    <div class="chart-card">
+      <div class="chart-title">🏋️ Exercise Weight Progression</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <select id="exercise-picker" class="form-input" onchange="renderExerciseChart()">
+          <option value="">— Select exercise —</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-exercise"></canvas></div>
+    </div>
+
+    <!-- Cardio charts per activity -->
+    <div id="cardio-charts"></div>
+
+  </div>
+</div>
+
+<!-- End Session Modal -->
+<div class="modal-overlay" id="end-modal" onclick="closeModal(event,'end-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">End Session</div>
+      <button class="modal-close" onclick="closeModalById('end-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Great work! Add how many calories you burned this session.</p>
+      <div class="form-group">
+        <label class="form-label">Calories Burned <span class="optional">optional</span></label>
+        <input type="number" id="end-calories" class="form-input text-center" placeholder="e.g. 450" style="font-size:28px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:var(--accent)">
+      </div>
+      <button class="btn-primary w-full" style="margin-top:16px" onclick="endSession()">Save &amp; End Session</button>
+    </div>
+  </div>
 </div>
 
 <!-- Session Detail Modal -->
-<div class="modal-overlay" id="session-modal" onclick="closeModal(event, 'session-modal')">
+<div class="modal-overlay" id="session-modal" onclick="closeModal(event,'session-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
@@ -158,7 +279,7 @@
 </div>
 
 <!-- Add Exercise Modal -->
-<div class="modal-overlay" id="exercise-modal" onclick="closeModal(event, 'exercise-modal')">
+<div class="modal-overlay" id="exercise-modal" onclick="closeModal(event,'exercise-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
@@ -168,15 +289,17 @@
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Name *</label>
-        <input type="text" id="new-ex-name" class="form-input" placeholder="e.g. Cable Fly">
+        <input type="text" id="new-ex-name" class="form-input" placeholder="e.g. Bulgarian Split Squat">
       </div>
-      <div class="form-group">
-        <label class="form-label">Muscle Group</label>
-        <input type="text" id="new-ex-muscle" class="form-input" placeholder="e.g. Chest">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Equipment</label>
-        <input type="text" id="new-ex-equip" class="form-input" placeholder="e.g. Cable">
+      <div class="set-grid-2">
+        <div class="form-group">
+          <label class="form-label">Muscle Group</label>
+          <input type="text" id="new-ex-muscle" class="form-input" placeholder="Legs">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Equipment</label>
+          <input type="text" id="new-ex-equip" class="form-input" placeholder="Dumbbell">
+        </div>
       </div>
       <div id="ex-error" class="alert-error" style="display:none;margin-top:8px"></div>
       <button class="btn-primary w-full" style="margin-top:16px" onclick="saveExercise()">Add Exercise</button>
@@ -184,11 +307,11 @@
   </div>
 </div>
 
-<!-- Toast notification -->
 <div id="toast"></div>
-
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/forge.js') }}"></script>
 {% endblock %}

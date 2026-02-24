@@ -1,342 +1,967 @@
-/* IronLog — App Logic */
+/* ═══════════════════════════════════════════════
+   IRONLOG — Main Styles
+   Aesthetic: Industrial / Brutalist Dark
+═══════════════════════════════════════════════ */
 
-let activeSessionId = null;
-let exercises = [];
-
-// ── Init ─────────────────────────────────────────────────────────────────────
-async function init() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('session-date').value = today;
-  document.getElementById('bw-date').value = today;
-
-  // Restore active session per user (stored with username key)
-  const username = document.querySelector('.user-badge')?.textContent.trim();
-  const storageKey = `activeSession_${username}`;
-  const stored = localStorage.getItem(storageKey);
-  if (stored) activeSessionId = parseInt(stored);
-
-  await loadExercises();
-  updateActiveUI();
-  if (activeSessionId) await loadCurrentSets();
+:root {
+  --bg:       #0a0a0c;
+  --surface:  #111115;
+  --surface2: #18181e;
+  --surface3: #1f1f27;
+  --border:   #252530;
+  --border2:  #32323f;
+  --accent:   #c8f135;
+  --accent2:  #ff4d2e;
+  --accent3:  #3af5c8;
+  --text:     #ebebf0;
+  --text2:    #a0a0b0;
+  --muted:    #5a5a6e;
+  --radius:   10px;
+  --radius-lg: 16px;
+  --shadow:   0 4px 24px rgba(0,0,0,.5);
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  ['workout','history','bodyweight'].forEach(t => {
-    document.getElementById('view-'+t).classList.toggle('active', t===tab);
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-  });
-  if (tab === 'history')    loadHistory();
-  if (tab === 'bodyweight') loadBodyWeight();
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-// ── Modals ────────────────────────────────────────────────────────────────────
-function closeModal(event, id) {
-  if (event.target === event.currentTarget) closeModalById(id);
-}
-function closeModalById(id) {
-  document.getElementById(id).classList.remove('open');
-}
-function openExerciseModal() {
-  document.getElementById('exercise-modal').classList.add('open');
-}
-
-// ── Exercises ─────────────────────────────────────────────────────────────────
-async function loadExercises() {
-  exercises = await fetch('/api/exercises').then(r => r.json());
-  const sel = document.getElementById('exercise-select');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">— Select exercise —</option>';
-  exercises.forEach(e => {
-    const o = document.createElement('option');
-    o.value = e.id;
-    o.textContent = e.name + (e.muscle_group ? ` (${e.muscle_group})` : '');
-    sel.appendChild(o);
-  });
-  if (prev) sel.value = prev;
+/* ── Auth Pages ─────────────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
 }
 
-async function saveExercise() {
-  const name  = document.getElementById('new-ex-name').value.trim();
-  const errEl = document.getElementById('ex-error');
-  if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
-
-  const res = await fetch('/api/exercises', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name,
-      muscle_group: document.getElementById('new-ex-muscle').value.trim(),
-      equipment:    document.getElementById('new-ex-equip').value.trim(),
-    })
-  });
-  const data = await res.json();
-
-  if (!res.ok) {
-    errEl.textContent = data.error || 'Failed to add exercise.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  errEl.style.display = 'none';
-  document.getElementById('new-ex-name').value   = '';
-  document.getElementById('new-ex-muscle').value = '';
-  document.getElementById('new-ex-equip').value  = '';
-  closeModalById('exercise-modal');
-
-  await loadExercises();
-  // Auto-select the new exercise
-  const sel = document.getElementById('exercise-select');
-  for (const o of sel.options) {
-    if (o.text.startsWith(name)) { sel.value = o.value; break; }
-  }
-  toast('Exercise added!');
+/* Animated grid background */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200,241,53,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,241,53,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridDrift 20s linear infinite;
+  pointer-events: none;
+}
+@keyframes gridDrift {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(48px); }
 }
 
-// ── Sessions ──────────────────────────────────────────────────────────────────
-function getStorageKey() {
-  const username = document.querySelector('.user-badge')?.textContent.trim();
-  return `activeSession_${username}`;
+/* Vignette */
+.auth-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.8) 100%);
+  pointer-events: none;
 }
 
-async function startSession() {
-  const date  = document.getElementById('session-date').value;
-  const notes = document.getElementById('session-notes').value.trim();
-  const res   = await fetch('/api/sessions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date, notes })
-  });
-  const data = await res.json();
-  activeSessionId = data.id;
-  localStorage.setItem(getStorageKey(), activeSessionId);
-  updateActiveUI();
-  toast('Session started! 💪');
+/* ── Splash Screen ──────────────────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+.splash.visible  { opacity: 1; }
+.splash.fade-out { opacity: 0; transition: opacity .6s ease; }
+
+.splash-inner {
+  text-align: center;
+  z-index: 1;
 }
 
-function endSession() {
-  activeSessionId = null;
-  localStorage.removeItem(getStorageKey());
-  updateActiveUI();
-  document.getElementById('current-sets').innerHTML = '';
-  toast('Session ended!');
+.splash-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 15vw, 96px);
+  letter-spacing: 8px;
+  color: var(--text);
+  line-height: 1;
+  animation: logoReveal .6s cubic-bezier(.16,1,.3,1) both;
+}
+.splash-logo span { color: var(--accent); }
+
+@keyframes logoReveal {
+  from { opacity: 0; transform: translateY(20px) scaleY(.95); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 
-function updateActiveUI() {
-  const banner  = document.getElementById('active-banner');
-  const logCard = document.getElementById('log-card');
-  if (activeSessionId) {
-    banner.classList.add('show');
-    logCard.style.display = 'block';
-    document.getElementById('session-label').textContent = `Session #${activeSessionId}`;
-  } else {
-    banner.classList.remove('show');
-    logCard.style.display = 'none';
-  }
+.splash-line {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(14px, 3.5vw, 20px);
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 16px;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: lineReveal .5s .4s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes lineReveal {
+  to { opacity: 1; transform: translateY(0); }
 }
 
-// ── Sets ──────────────────────────────────────────────────────────────────────
-async function logSet() {
-  if (!activeSessionId) { toast('Start a session first!', 'error'); return; }
-  const exerciseId = document.getElementById('exercise-select').value;
-  if (!exerciseId)  { toast('Select an exercise!', 'error'); return; }
-
-  const payload = {
-    session_id:   activeSessionId,
-    exercise_id:  parseInt(exerciseId),
-    set_number:   parseInt(document.getElementById('set-number').value) || 1,
-    reps:         parseInt(document.getElementById('set-reps').value)   || null,
-    weight_kg:    parseFloat(document.getElementById('set-weight').value) || null,
-    rest_seconds: parseInt(document.getElementById('set-rest').value)   || null,
-    rpe:          parseFloat(document.getElementById('set-rpe').value)  || null,
-    notes:        document.getElementById('set-notes').value.trim(),
-  };
-
-  await fetch('/api/sets', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  // Auto-increment set number
-  document.getElementById('set-number').value =
-    parseInt(document.getElementById('set-number').value) + 1;
-  document.getElementById('set-notes').value = '';
-
-  await loadCurrentSets();
-  toast('Set logged! 🔥');
+/* ── Auth Card ──────────────────────────────────────────────── */
+.auth-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  padding: 24px 16px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
+}
+.auth-wrapper.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-async function deleteSet(id) {
-  await fetch(`/api/sets/${id}`, { method: 'DELETE' });
-  await loadCurrentSets();
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(200,241,53,.05);
 }
 
-async function loadCurrentSets() {
-  if (!activeSessionId) return;
-  const session = await fetch(`/api/sessions/${activeSessionId}`).then(r => r.json());
-  renderCurrentSets(session.sets);
+.auth-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 4px;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.auth-logo span { color: var(--accent); }
+
+.auth-heading {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.auth-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 28px;
 }
 
-function renderCurrentSets(sets) {
-  const container = document.getElementById('current-sets');
-  if (!sets || !sets.length) { container.innerHTML = ''; return; }
-
-  const groups = groupByExercise(sets);
-  let html = '<div class="card"><div class="card-header"><div class="card-title">Current Session</div></div>';
-  for (const [name, g] of Object.entries(groups)) {
-    html += `<div class="exercise-group">
-      <div class="exercise-group-name">
-        ${name}
-        ${g.muscle ? `<span class="muscle-tag">${g.muscle}</span>` : ''}
-      </div>`;
-    g.sets.forEach(s => {
-      const main = [
-        s.reps    ? `${s.reps} reps`       : null,
-        s.weight_kg ? `@ ${s.weight_kg} kg` : null,
-      ].filter(Boolean).join(' ');
-      const sub = [
-        s.rpe          ? `RPE ${s.rpe}`            : null,
-        s.rest_seconds ? `${s.rest_seconds}s rest`  : null,
-        s.notes        ? s.notes                    : null,
-      ].filter(Boolean).join(' · ');
-      html += `<div class="set-row">
-        <div class="set-badge">${s.set_number}</div>
-        <div class="set-info">
-          <div class="set-main">${main || '—'}</div>
-          ${sub ? `<div class="set-sub">${sub}</div>` : ''}
-        </div>
-        <button class="btn-danger" onclick="deleteSet(${s.id})">✕</button>
-      </div>`;
-    });
-    html += '</div>';
-  }
-  html += '</div>';
-  container.innerHTML = html;
+.alert-error {
+  background: rgba(255,77,46,.12);
+  border: 1px solid rgba(255,77,46,.3);
+  border-radius: 8px;
+  color: #ff7a5c;
+  font-size: 13px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
 }
 
-// ── History ────────────────────────────────────────────────────────────────────
-async function loadHistory() {
-  const sessions = await fetch('/api/sessions').then(r => r.json());
-  const container = document.getElementById('history-list');
+.btn-auth {
+  width: 100%;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background .15s, transform .1s;
+}
+.btn-auth:hover  { background: #b8e020; }
+.btn-auth:active { transform: scale(.98); }
+.btn-auth:disabled { opacity: .6; cursor: not-allowed; }
 
-  if (!sessions.length) {
-    container.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">📋</div>
-      <div class="empty-text">No sessions yet.<br>Start your first workout!</div>
-    </div>`;
-    return;
-  }
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.auth-switch a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.auth-switch a:hover { text-decoration: underline; }
 
-  container.innerHTML = sessions.map(s => `
-    <div class="session-card" onclick="openSession(${s.id})">
-      <div class="session-date">${formatDate(s.session_date)}</div>
-      <div class="session-chips">
-        <span class="chip chip-green">${s.total_sets} sets</span>
-        ${s.total_volume ? `<span class="chip chip-blue">${Math.round(s.total_volume).toLocaleString()} kg vol</span>` : ''}
-        <span class="chip chip-gray">#${s.id}</span>
-      </div>
-      ${s.notes ? `<div class="session-note">📝 ${s.notes}</div>` : ''}
-    </div>
-  `).join('');
+/* ── App Layout ─────────────────────────────────────────────── */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Header */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 54px;
+}
+.app-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 3px;
+  color: var(--text);
+}
+.app-logo span { color: var(--accent); }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.user-badge {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: .5px;
 }
 
-async function openSession(id) {
-  const session = await fetch(`/api/sessions/${id}`).then(r => r.json());
-  document.getElementById('modal-title').textContent = formatDate(session.session_date);
+.logout-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all .2s;
+}
+.logout-btn:hover { color: var(--accent2); border-color: var(--accent2); }
 
-  const groups = groupByExercise(session.sets);
-  let html = '';
-  if (session.notes) html += `<p style="color:var(--muted);font-size:13px;margin-bottom:14px">📝 ${session.notes}</p>`;
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 54px;
+  z-index: 99;
+}
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 13px 4px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab svg { opacity: .6; }
+.tab.active svg { opacity: 1; }
 
-  for (const [name, g] of Object.entries(groups)) {
-    html += `<div class="exercise-group">
-      <div class="exercise-group-name">
-        ${name}
-        ${g.muscle ? `<span class="muscle-tag">${g.muscle}</span>` : ''}
-      </div>`;
-    g.sets.forEach(s => {
-      const main = [
-        s.reps      ? `${s.reps} reps`       : null,
-        s.weight_kg ? `@ ${s.weight_kg} kg`  : null,
-      ].filter(Boolean).join(' ');
-      const sub = [
-        s.rpe          ? `RPE ${s.rpe}`           : null,
-        s.rest_seconds ? `${s.rest_seconds}s rest` : null,
-        s.notes        ? s.notes                   : null,
-      ].filter(Boolean).join(' · ');
-      html += `<div class="set-row">
-        <div class="set-badge">${s.set_number}</div>
-        <div class="set-info">
-          <div class="set-main">${main || '—'}</div>
-          ${sub ? `<div class="set-sub">${sub}</div>` : ''}
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-  }
+/* Views */
+.view { display: none; padding: 16px; max-width: 640px; margin: 0 auto; width: 100%; }
+.view.active { display: block; }
 
-  if (!session.sets.length) {
-    html = '<div class="empty-state"><div class="empty-text">No sets logged in this session.</div></div>';
-  }
-
-  document.getElementById('modal-body').innerHTML = html;
-  document.getElementById('session-modal').classList.add('open');
+/* ── Cards ──────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
 }
 
-// ── Body Weight ────────────────────────────────────────────────────────────────
-async function logBodyWeight() {
-  const weight = parseFloat(document.getElementById('bw-weight').value);
-  if (!weight) { toast('Enter a weight!', 'error'); return; }
-
-  await fetch('/api/bodyweight', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      weight_kg: weight,
-      date:  document.getElementById('bw-date').value,
-      notes: document.getElementById('bw-notes').value.trim(),
-    })
-  });
-
-  document.getElementById('bw-weight').value = '';
-  document.getElementById('bw-notes').value  = '';
-  await loadBodyWeight();
-  toast('Weight saved! ⚖️');
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-async function loadBodyWeight() {
-  const entries = await fetch('/api/bodyweight').then(r => r.json());
-  const container = document.getElementById('bw-list');
-
-  if (!entries.length) {
-    container.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">⚖️</div>
-      <div class="empty-text">No entries yet.</div>
-    </div>`;
-    return;
-  }
-
-  container.innerHTML = entries.map(e => `
-    <div class="bw-row">
-      <div>
-        <div class="bw-weight">${e.weight_kg}<span class="bw-unit">kg</span></div>
-        ${e.notes ? `<div class="bw-note">${e.notes}</div>` : ''}
-      </div>
-      <div class="bw-date">${formatDate(e.logged_at)}</div>
-    </div>
-  `).join('');
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function groupByExercise(sets) {
-  const groups = {};
-  (sets || []).forEach(s => {
-    if (!groups[s.exercise_name]) groups[s.exercise_name] = { muscle: s.muscle_group, sets: [] };
-    groups[s.exercise_name].sets.push(s);
-  });
-  return groups;
+/* ── Form Elements ──────────────────────────────────────────── */
+.form-group { margin-bottom: 12px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.optional { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+.form-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200,241,53,.1);
+}
+select.form-input { cursor: pointer; }
+.text-center { text-align: center; }
+
+/* Input grids */
+.set-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.set-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  padding: 13px 20px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-primary:hover  { background: #b8e020; }
+.btn-primary:active { transform: scale(.98); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-danger {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-danger:hover { color: var(--accent2); border-color: var(--accent2); }
+
+.btn-sm { font-size: 12px; padding: 6px 12px; }
+.w-full { width: 100%; }
+
+/* ── Active Session Banner ──────────────────────────────────── */
+.active-banner {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(200,241,53,.08), rgba(58,245,200,.06));
+  border: 1px solid rgba(200,241,53,.25);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.active-banner.show { display: flex; }
+
+.banner-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
 }
 
-// Init on load
-init();
+.banner-info { flex: 1; }
+.banner-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); }
+.banner-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.end-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.end-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* ── Set Rows ───────────────────────────────────────────────── */
+.exercise-group { margin-bottom: 20px; }
+
+.exercise-group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.muscle-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  background: var(--surface3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--muted);
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.set-row:last-child { border-bottom: none; }
+
+.set-badge {
+  width: 28px; height: 28px;
+  background: var(--surface3);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.set-info { flex: 1; }
+.set-main { font-weight: 600; font-size: 15px; }
+.set-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── History ────────────────────────────────────────────────── */
+.session-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+}
+.session-card:hover { border-color: var(--accent); }
+.session-card:active { transform: scale(.99); }
+
+.session-date {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.session-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.chip {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+.chip-green  { background: rgba(200,241,53,.1);  color: var(--accent); }
+.chip-blue   { background: rgba(58,245,200,.1);  color: var(--accent3); }
+.chip-gray   { background: var(--surface3); color: var(--muted); }
+.session-note { font-size: 12px; color: var(--muted); }
+
+/* ── Body Weight ────────────────────────────────────────────── */
+.bw-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.bw-row:last-child { border-bottom: none; }
+.bw-weight {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  color: var(--accent);
+  line-height: 1;
+}
+.bw-unit { font-size: 14px; color: var(--muted); margin-left: 3px; }
+.bw-date { font-size: 12px; color: var(--muted); text-align: right; }
+.bw-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── Modals ─────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal-sheet {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border2);
+  padding: 0 20px 32px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp .3s cubic-bezier(.16,1,.3,1);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color .15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { padding-bottom: 8px; }
+
+/* ── Toast ──────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 22px;
+  border-radius: 100px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  transition: transform .3s cubic-bezier(.16,1,.3,1);
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+#toast.success { border-color: rgba(200,241,53,.4); color: var(--accent); }
+#toast.error   { border-color: rgba(255,77,46,.4);  color: #ff7a5c; }
+
+/* ── Empty State ────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .6; }
+.empty-text { font-size: 14px; line-height: 1.7; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .set-grid   { grid-template-columns: 1fr 1fr; }
+  .auth-card  { padding: 28px 20px; }
+}
+@media (min-width: 641px) {
+  .view { padding: 24px 0; }
+}
+
+/* ── Cardio ──────────────────────────────────────────────────── */
+.pace-display {
+  background: rgba(200,241,53,.08);
+  border: 1px solid rgba(200,241,53,.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cardio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cardio-row:last-child { border-bottom: none; }
+.cardio-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--surface3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.cardio-info { flex: 1; }
+.cardio-title { font-weight: 700; font-size: 14px; text-transform: capitalize; }
+.cardio-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.cardio-stat {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.cardio-stat strong { color: var(--text2); }
+
+/* ── Calorie / Fuel ──────────────────────────────────────────── */
+.calorie-summary {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+.cal-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: 2px;
+}
+.cal-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.macro-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+}
+.macro-pill {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+}
+.macro-val { font-weight: 700; font-size: 18px; }
+.macro-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+.macro-p { color: #3af5c8; }
+.macro-c { color: #f5c83a; }
+.macro-f { color: #f57a3a; }
+
+.meal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-icon {
+  font-size: 20px;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.meal-info { flex: 1; }
+.meal-name { font-weight: 600; font-size: 14px; }
+.meal-macros { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.meal-kcal {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--accent);
+}
+
+/* ── FORGE Analytics ──────────────────────────────────────────── */
+.forge-header {
+  padding: 8px 0 20px;
+  text-align: center;
+}
+.forge-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  letter-spacing: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.forge-sub {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.stat-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+.stat-pill-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-pill-val.blue  { color: var(--accent3); }
+.stat-pill-val.red   { color: #ff6b4a; }
+.stat-pill-val.white { color: var(--text); }
+.stat-pill-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  margin-bottom: 14px;
+}
+.chart-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.chart-wrap {
+  position: relative;
+  height: 200px;
+}
+
+/* Heatmap */
+.heatmap-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 14px);
+  grid-auto-flow: column;
+  gap: 3px;
+  width: max-content;
+}
+.heatmap-cell {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  background: var(--surface3);
+  cursor: default;
+  transition: transform .1s;
+}
+.heatmap-cell:hover { transform: scale(1.3); }
+.heatmap-cell.h1 { background: rgba(200,241,53,.25); }
+.heatmap-cell.h2 { background: rgba(200,241,53,.5); }
+.heatmap-cell.h3 { background: rgba(200,241,53,.75); }
+.heatmap-cell.h4 { background: var(--accent); }
+
+.no-data {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 30px 0;
+}
+
+/* ── Panel Toggle (Lift / Cardio) ──────────────────────────── */
+.panel-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ptab {
+  flex: 1;
+  padding: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ptab.active {
+  background: rgba(200,241,53,.08);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Cardio inline stats ────────────────────────────────────── */
+.cardio-stats { display:flex; flex-wrap:wrap; gap:6px; }
+.cardio-stat {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.cardio-stat strong { color: var(--text2); }
+
+.pace-display {
+  background: rgba(200,241,53,.08);
+  border: 1px solid rgba(200,241,53,.2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Session history chips ──────────────────────────────────── */
+.chip-cardio { background: rgba(58,245,200,.1); color: var(--accent3); }
+.chip-cal    { background: rgba(255,107,74,.1); color: #ff7a5c; }
+
+/* ── Calorie badge in modal ─────────────────────────────────── */
+.cal-badge {
+  display: inline-block;
+  background: rgba(255,107,74,.1);
+  border: 1px solid rgba(255,107,74,.25);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ff7a5c;
+  margin-bottom: 12px;
+}
+
+/* ── FORGE ──────────────────────────────────────────────────── */
+.forge-header { padding: 8px 0 20px; text-align:center; }
+.forge-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px; letter-spacing: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1;
+}
+.forge-sub {
+  font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--muted); margin-top: 6px;
+}
+
+.stat-pills { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-pill  { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:14px 16px; }
+.stat-pill-val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); line-height:1; }
+.stat-pill-val.blue { color:var(--accent3); }
+.stat-pill-val.red  { color:#ff6b4a; }
+.stat-pill-lbl { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 16px; margin-bottom:14px; }
+.chart-title { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+.chart-wrap  { position:relative; height:200px; }
+
+.heatmap-wrap { overflow-x:auto; padding-bottom:4px; }
+.heatmap-grid { display:grid; grid-template-rows:repeat(7,14px); grid-auto-flow:column; gap:3px; width:max-content; }
+.heatmap-cell { width:14px; height:14px; border-radius:3px; background:var(--surface3); }
+.heatmap-cell.h1 { background:rgba(200,241,53,.25); }
+.heatmap-cell.h2 { background:rgba(200,241,53,.5); }
+.heatmap-cell.h3 { background:rgba(200,241,53,.75); }
+.heatmap-cell.h4 { background:var(--accent); }
+
+.no-data { text-align:center; color:var(--muted); font-size:13px; padding:30px 0; }
