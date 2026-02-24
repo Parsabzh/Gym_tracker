@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — IronLog{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <div class="grid-bg"></div>
+
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">IRON<span>LOG</span></div>
+      <div class="splash-line" id="splash-line"></div>
+    </div>
+  </div>
+
+  <div class="auth-wrapper" id="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo">IRON<span>LOG</span></div>
+      <h2 class="auth-heading">Create account</h2>
+      <p class="auth-sub">Start tracking your gains today.</p>
+
+      <div id="form-error" class="alert-error" style="display:none"></div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="username" class="form-input" placeholder="iron_warrior">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="email" class="form-input" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span style="color:var(--muted);font-weight:400">(min 6 chars)</span></label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••">
+      </div>
+
+      <button class="btn-auth" id="signup-btn" onclick="doSignup()">
+        <span id="signup-text">Create Account</span>
+        <span id="signup-spin" style="display:none">⟳</span>
+      </button>
+
+      <p class="auth-switch">Already have an account? <a href="/login">Sign in →</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOTIVATIONAL = [
+  "Every legend started somewhere.",
+  "Your transformation begins now.",
+  "The strongest version of you awaits.",
+  "Today is Day 1. Make it count.",
+  "Progress, not perfection.",
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const line = document.getElementById('splash-line');
+  const splash = document.getElementById('splash');
+  const wrapper = document.getElementById('auth-wrapper');
+  line.textContent = MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)];
+  setTimeout(() => splash.classList.add('visible'), 100);
+  setTimeout(() => splash.classList.add('fade-out'), 2400);
+  setTimeout(() => { splash.style.display = 'none'; wrapper.classList.add('visible'); }, 3000);
+  document.getElementById('password').addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
+});
+
+async function doSignup() {
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('signup-btn');
+
+  if (!username || !email || !password) { showError('All fields are required.'); return; }
+
+  btn.disabled = true;
+  document.getElementById('signup-text').style.display = 'none';
+  document.getElementById('signup-spin').style.display = 'inline';
+
+  const res = await fetch('/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password })
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    window.location.href = data.redirect;
+  } else {
+    showError(data.error || 'Signup failed.');
+    btn.disabled = false;
+    document.getElementById('signup-text').style.display = 'inline';
+    document.getElementById('signup-spin').style.display = 'none';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+{% endblock %}

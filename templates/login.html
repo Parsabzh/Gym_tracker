@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Login — IronLog{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+  <!-- Animated background grid -->
+  <div class="grid-bg"></div>
+
+  <!-- Motivational splash -->
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">IRON<span>LOG</span></div>
+      <div class="splash-line" id="splash-line"></div>
+    </div>
+  </div>
+
+  <!-- Auth card -->
+  <div class="auth-wrapper" id="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo">IRON<span>LOG</span></div>
+      <h2 class="auth-heading">Welcome back</h2>
+      <p class="auth-sub">Push harder. Track smarter.</p>
+
+      {% if error %}
+      <div class="alert-error">{{ error }}</div>
+      {% endif %}
+
+      <div id="form-error" class="alert-error" style="display:none"></div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="username" class="form-input" placeholder="your_username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button class="btn-auth" id="login-btn" onclick="doLogin()">
+        <span id="login-text">Sign In</span>
+        <span id="login-spin" style="display:none">⟳</span>
+      </button>
+
+      <p class="auth-switch">No account? <a href="/signup">Create one →</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOTIVATIONAL = [
+  "Your only competition is yesterday's you.",
+  "The iron never lies.",
+  "Pain is temporary. PRs are forever.",
+  "Earn it. Every. Single. Rep.",
+  "Champions are built in the gym.",
+  "No excuses. Only results.",
+  "The bar doesn't care about your feelings.",
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const line = document.getElementById('splash-line');
+  const splash = document.getElementById('splash');
+  const wrapper = document.getElementById('auth-wrapper');
+
+  // Pick random motivational quote
+  line.textContent = MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)];
+
+  // Animate in splash, then fade out and show form
+  setTimeout(() => splash.classList.add('visible'), 100);
+  setTimeout(() => splash.classList.add('fade-out'), 2400);
+  setTimeout(() => {
+    splash.style.display = 'none';
+    wrapper.classList.add('visible');
+  }, 3000);
+
+  // Allow Enter key
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('form-error');
+
+  if (!username || !password) {
+    showError('Please fill in all fields.'); return;
+  }
+
+  btn.disabled = true;
+  document.getElementById('login-text').style.display = 'none';
+  document.getElementById('login-spin').style.display = 'inline';
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    window.location.href = data.redirect;
+  } else {
+    showError(data.error || 'Login failed.');
+    btn.disabled = false;
+    document.getElementById('login-text').style.display = 'inline';
+    document.getElementById('login-spin').style.display = 'none';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}IronLog — Dashboard{% endblock %}
+
+{% block body %}
+<div id="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="app-logo">IRON<span>LOG</span></div>
+      <div class="header-right">
+        <span class="user-badge">{{ username }}</span>
+        <a href="/logout" class="logout-btn" title="Logout">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab bar -->
+  <nav class="tab-bar">
+    <button class="tab active" onclick="switchTab('workout')" id="tab-workout">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
+      Workout
+    </button>
+    <button class="tab" onclick="switchTab('history')" id="tab-history">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-4"/><path d="M3 3v4h4"/></svg>
+      History
+    </button>
+    <button class="tab" onclick="switchTab('bodyweight')" id="tab-bodyweight">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+      Weight
+    </button>
+  </nav>
+
+  <!-- ══ WORKOUT TAB ══ -->
+  <div id="view-workout" class="view active">
+
+    <!-- Active session banner -->
+    <div class="active-banner" id="active-banner">
+      <div class="banner-dot"></div>
+      <div class="banner-info">
+        <div class="banner-title">SESSION ACTIVE</div>
+        <div class="banner-sub" id="session-label">—</div>
+      </div>
+      <button class="end-btn" onclick="endSession()">End</button>
+    </div>
+
+    <!-- Start session card -->
+    <div class="card" id="start-card">
+      <div class="card-header">
+        <div class="card-title">New Session</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" id="session-date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes <span class="optional">optional</span></label>
+        <input type="text" id="session-notes" class="form-input" placeholder="Push day, leg day…">
+      </div>
+      <button class="btn-primary w-full" onclick="startSession()">Start Session</button>
+    </div>
+
+    <!-- Log set card -->
+    <div class="card" id="log-card" style="display:none">
+      <div class="card-header">
+        <div class="card-title">Log Set</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Exercise</label>
+        <select id="exercise-select" class="form-input"></select>
+      </div>
+      <button class="btn-ghost btn-sm" onclick="openExerciseModal()" style="margin-top:6px;margin-bottom:4px">+ Add Custom Exercise</button>
+      <div class="set-grid">
+        <div class="form-group">
+          <label class="form-label">Set #</label>
+          <input type="number" id="set-number" class="form-input text-center" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reps</label>
+          <input type="number" id="set-reps" class="form-input text-center" placeholder="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="set-weight" class="form-input text-center" placeholder="60" step="0.5">
+        </div>
+      </div>
+      <div class="set-grid-2">
+        <div class="form-group">
+          <label class="form-label">Rest (sec)</label>
+          <input type="number" id="set-rest" class="form-input text-center" placeholder="90">
+        </div>
+        <div class="form-group">
+          <label class="form-label">RPE (1–10)</label>
+          <input type="number" id="set-rpe" class="form-input text-center" placeholder="7" min="1" max="10" step="0.5">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes <span class="optional">optional</span></label>
+        <input type="text" id="set-notes" class="form-input" placeholder="Felt heavy, paused reps…">
+      </div>
+      <button class="btn-primary w-full" onclick="logSet()">+ Add Set</button>
+    </div>
+
+    <!-- Current session sets display -->
+    <div id="current-sets"></div>
+
+  </div>
+
+  <!-- ══ HISTORY TAB ══ -->
+  <div id="view-history" class="view">
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ══ BODY WEIGHT TAB ══ -->
+  <div id="view-bodyweight" class="view">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Log Body Weight</div></div>
+      <div class="set-grid-2">
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" id="bw-weight" class="form-input" placeholder="75.0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="bw-date" class="form-input">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes <span class="optional">optional</span></label>
+        <input type="text" id="bw-notes" class="form-input" placeholder="Morning, fasted…">
+      </div>
+      <button class="btn-primary w-full" onclick="logBodyWeight()">Save</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Recent Entries</div></div>
+      <div id="bw-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Session Detail Modal -->
+<div class="modal-overlay" id="session-modal" onclick="closeModal(event, 'session-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Session</div>
+      <button class="modal-close" onclick="closeModalById('session-modal')">✕</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- Add Exercise Modal -->
+<div class="modal-overlay" id="exercise-modal" onclick="closeModal(event, 'exercise-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Add Exercise</div>
+      <button class="modal-close" onclick="closeModalById('exercise-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name *</label>
+        <input type="text" id="new-ex-name" class="form-input" placeholder="e.g. Cable Fly">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Muscle Group</label>
+        <input type="text" id="new-ex-muscle" class="form-input" placeholder="e.g. Chest">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Equipment</label>
+        <input type="text" id="new-ex-equip" class="form-input" placeholder="e.g. Cable">
+      </div>
+      <div id="ex-error" class="alert-error" style="display:none;margin-top:8px"></div>
+      <button class="btn-primary w-full" style="margin-top:16px" onclick="saveExercise()">Add Exercise</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
