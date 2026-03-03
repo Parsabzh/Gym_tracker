@@ -39,11 +39,11 @@ def add_exercise():
     if not name: return jsonify({"error":"Name required"}), 400
     conn = get_db()
     if conn.execute(
-        "SELECT id FROM exercise WHERE name=? AND (is_global=1 OR user_id=?)",
+        "SELECT id FROM exercise WHERE LOWER(name)=LOWER(?) AND (is_global=1 OR user_id=?)",
         (name, session["user_id"])
     ).fetchone():
         conn.close()
-        return jsonify({"error":"Already exists"}), 409
+        return jsonify({"error": f'"{name}" already exists in your list'}), 409
     cur = conn.execute(
         "INSERT INTO exercise (name,muscle_group,equipment,user_id,is_global) VALUES(?,?,?,?,0)",
         (name, data.get("muscle_group",""), data.get("equipment",""), session["user_id"])

@@ -20,20 +20,24 @@
   </header>
 
   <nav class="tab-bar">
-    <button class="tab active" onclick="switchTab('session')" id="tab-session">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
+    <button class="tab active" onclick="switchTab('session')"    id="tab-session">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
       Session
     </button>
-    <button class="tab" onclick="switchTab('history')" id="tab-history">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-4"/><path d="M3 3v4h4"/></svg>
+    <button class="tab" onclick="switchTab('templates')" id="tab-templates">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Templates
+    </button>
+    <button class="tab" onclick="switchTab('history')"   id="tab-history">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-4"/><path d="M3 3v4h4"/></svg>
       History
     </button>
     <button class="tab" onclick="switchTab('bodyweight')" id="tab-bodyweight">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
       Weight
     </button>
-    <button class="tab" onclick="switchTab('forge')" id="tab-forge">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <button class="tab" onclick="switchTab('forge')"     id="tab-forge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       FORGE
     </button>
   </nav>
@@ -41,17 +45,16 @@
   <!-- ══ SESSION TAB ══ -->
   <div id="view-session" class="view active">
 
-    <!-- Active session banner -->
     <div class="active-banner" id="active-banner">
       <div class="banner-dot"></div>
       <div class="banner-info">
         <div class="banner-title">SESSION ACTIVE</div>
         <div class="banner-sub" id="session-label">—</div>
       </div>
-      <button class="end-btn" onclick="openEndModal()">End Session</button>
+      <button class="end-btn" onclick="openEndModal()">End</button>
     </div>
 
-    <!-- Start session -->
+    <!-- Start card -->
     <div class="card" id="start-card">
       <div class="card-header"><div class="card-title">New Session</div></div>
       <div class="set-grid-2">
@@ -64,19 +67,20 @@
           <input type="text" id="session-notes" class="form-input" placeholder="Push day…">
         </div>
       </div>
-      <button class="btn-primary w-full" onclick="startSession()">Start Session</button>
+      <div class="start-btns">
+        <button class="btn-primary" style="flex:2" onclick="startSession()">Start Blank Session</button>
+        <button class="btn-ghost"   style="flex:1" onclick="switchTab('templates')">From Template</button>
+      </div>
     </div>
 
-    <!-- Active session: strength + cardio panels -->
+    <!-- Active panels -->
     <div id="session-panels" style="display:none">
-
-      <!-- Panel toggle -->
       <div class="panel-toggle">
-        <button class="ptab active" id="ptab-lift" onclick="switchPanel('lift')">🏋️ Lift</button>
-        <button class="ptab" id="ptab-cardio" onclick="switchPanel('cardio')">🏃 Cardio</button>
+        <button class="ptab active" id="ptab-lift"   onclick="switchPanel('lift')">🏋️ Lift</button>
+        <button class="ptab"        id="ptab-cardio" onclick="switchPanel('cardio')">🏃 Cardio</button>
       </div>
 
-      <!-- Lift panel -->
+      <!-- Lift -->
       <div id="panel-lift">
         <div class="card">
           <div class="card-header"><div class="card-title">Log Set</div></div>
@@ -118,7 +122,7 @@
         <div id="current-sets"></div>
       </div>
 
-      <!-- Cardio panel -->
+      <!-- Cardio -->
       <div id="panel-cardio" style="display:none">
         <div class="card">
           <div class="card-header"><div class="card-title">Log Cardio</div></div>
@@ -162,8 +166,16 @@
         </div>
         <div id="current-cardio"></div>
       </div>
+    </div>
+  </div>
 
-    </div><!-- /session-panels -->
+  <!-- ══ TEMPLATES TAB ══ -->
+  <div id="view-templates" class="view">
+    <div class="card">
+      <div class="card-header"><div class="card-title">My Templates</div></div>
+      <button class="btn-ghost btn-sm w-full" onclick="openCreateTemplateModal()">+ Create New Template</button>
+    </div>
+    <div id="template-list"></div>
   </div>
 
   <!-- ══ HISTORY TAB ══ -->
@@ -203,34 +215,23 @@
       <div class="forge-title">FORGE</div>
       <div class="forge-sub">Your data. Forged into insight.</div>
     </div>
-
     <div id="stat-pills" class="stat-pills"></div>
-
-    <!-- Workout heatmap -->
     <div class="chart-card">
       <div class="chart-title">📅 Workout Heatmap — Last 6 Months</div>
       <div id="heatmap-container" class="heatmap-wrap"></div>
     </div>
-
-    <!-- Weekly volume -->
     <div class="chart-card">
       <div class="chart-title">⚡ Weekly Volume (kg lifted)</div>
       <div class="chart-wrap"><canvas id="chart-volume"></canvas></div>
     </div>
-
-    <!-- Calories burned per session -->
     <div class="chart-card">
       <div class="chart-title">🔥 Calories Burned per Session</div>
       <div class="chart-wrap"><canvas id="chart-calories"></canvas></div>
     </div>
-
-    <!-- Body weight trend -->
     <div class="chart-card">
       <div class="chart-title">⚖️ Body Weight Trend</div>
       <div class="chart-wrap"><canvas id="chart-bw"></canvas></div>
     </div>
-
-    <!-- Per-exercise weight progression (dynamic) -->
     <div class="chart-card">
       <div class="chart-title">🏋️ Exercise Weight Progression</div>
       <div class="form-group" style="margin-bottom:12px">
@@ -240,14 +241,12 @@
       </div>
       <div class="chart-wrap"><canvas id="chart-exercise"></canvas></div>
     </div>
-
-    <!-- Cardio charts per activity -->
     <div id="cardio-charts"></div>
-
   </div>
-</div>
 
-<!-- End Session Modal -->
+</div><!-- /#app -->
+
+<!-- ══ END SESSION MODAL ══ -->
 <div class="modal-overlay" id="end-modal" onclick="closeModal(event,'end-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -256,17 +255,30 @@
       <button class="modal-close" onclick="closeModalById('end-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Great work! Add how many calories you burned this session.</p>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Great work! Optionally log calories burned.</p>
       <div class="form-group">
         <label class="form-label">Calories Burned <span class="optional">optional</span></label>
-        <input type="number" id="end-calories" class="form-input text-center" placeholder="e.g. 450" style="font-size:28px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:var(--accent)">
+        <input type="number" id="end-calories" class="form-input text-center"
+               placeholder="e.g. 450"
+               style="font-size:32px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:var(--accent);height:64px">
       </div>
-      <button class="btn-primary w-full" style="margin-top:16px" onclick="endSession()">Save &amp; End Session</button>
+      <div class="divider"></div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:8px;font-weight:600;letter-spacing:.5px;text-transform:uppercase">Save as Template?</p>
+      <div class="set-grid-2" style="align-items:flex-end">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Template Name</label>
+          <input type="text" id="template-name-input" class="form-input" placeholder="e.g. Push Day A">
+        </div>
+        <button class="btn-ghost" onclick="saveAsTemplate()" style="height:44px">💾 Save</button>
+      </div>
+      <div id="template-save-msg" style="display:none;font-size:12px;color:var(--accent);margin-top:6px;font-weight:600"></div>
+      <div class="divider"></div>
+      <button class="btn-primary w-full" onclick="endSession()">Finish &amp; Save Session</button>
     </div>
   </div>
 </div>
 
-<!-- Session Detail Modal -->
+<!-- ══ SESSION DETAIL MODAL ══ -->
 <div class="modal-overlay" id="session-modal" onclick="closeModal(event,'session-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -278,7 +290,49 @@
   </div>
 </div>
 
-<!-- Add Exercise Modal -->
+<!-- ══ TEMPLATE DETAIL MODAL ══ -->
+<div class="modal-overlay" id="template-modal" onclick="closeModal(event,'template-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="tpl-modal-title">Template</div>
+      <button class="modal-close" onclick="closeModalById('template-modal')">✕</button>
+    </div>
+    <div id="tpl-modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- ══ CREATE TEMPLATE MODAL ══ -->
+<div class="modal-overlay" id="create-template-modal" onclick="closeModal(event,'create-template-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">New Template</div>
+      <button class="modal-close" onclick="closeModalById('create-template-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Template Name *</label>
+        <input type="text" id="new-tpl-name" class="form-input" placeholder="e.g. Leg Day B">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes <span class="optional">optional</span></label>
+        <input type="text" id="new-tpl-notes" class="form-input" placeholder="Focus on volume…">
+      </div>
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:10px">Exercises</div>
+      <div id="new-tpl-exercises"></div>
+      <div class="set-grid-2" style="margin-top:8px">
+        <select id="new-tpl-ex-select" class="form-input"></select>
+        <button class="btn-ghost" onclick="addTplExercise()">+ Add</button>
+      </div>
+      <div id="new-tpl-error" class="alert-error" style="display:none;margin-top:8px"></div>
+      <button class="btn-primary w-full" style="margin-top:16px" onclick="createTemplate()">Create Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD EXERCISE MODAL ══ -->
 <div class="modal-overlay" id="exercise-modal" onclick="closeModal(event,'exercise-modal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -313,5 +367,6 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/templates.js') }}"></script>
 <script src="{{ url_for('static', filename='js/forge.js') }}"></script>
 {% endblock %}

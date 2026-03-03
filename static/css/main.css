@@ -965,3 +965,34 @@ select.form-input { cursor: pointer; }
 .heatmap-cell.h4 { background:var(--accent); }
 
 .no-data { text-align:center; color:var(--muted); font-size:13px; padding:30px 0; }
+
+/* ── Template cards ─────────────────────────────────────────── */
+.template-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+}
+.template-card:hover  { border-color: var(--accent); }
+.template-card:active { transform: scale(.99); }
+
+.tpl-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 700; letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.tpl-meta  { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
+.tpl-notes { font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* ── Start session buttons row ──────────────────────────────── */
+.start-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.divider { height:1px; background:var(--border); margin:16px 0; }

@@ -30,11 +30,12 @@ async function init() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['session','history','bodyweight','forge'].forEach(t => {
+  ['session','templates','history','bodyweight','forge'].forEach(t => {
     document.getElementById('view-'+t)?.classList.toggle('active', t===tab);
     document.getElementById('tab-'+t)?.classList.toggle('active', t===tab);
   });
   if (tab==='history')    loadHistory();
+  if (tab==='templates')  loadTemplates();
   if (tab==='bodyweight') loadBodyWeight();
   if (tab==='forge')      loadForge();
 }
@@ -404,3 +405,28 @@ function formatDate(d) {
 }
 
 init();
+
+// ── Template save from End Session modal ──────────────────────────────────────
+let _templateSavedThisSession = false;
+
+async function saveAsTemplate() {
+  const name = document.getElementById('template-name-input').value.trim();
+  const msg  = document.getElementById('template-save-msg');
+  if (!name) { msg.style.cssText='display:block;color:#ff7a5c'; msg.textContent='Enter a template name first.'; return; }
+  if (!activeSessionId) return;
+
+  const res = await fetch(`/api/templates/from-session/${activeSessionId}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    msg.style.cssText='display:block;color:var(--accent)';
+    msg.textContent = `✓ Saved as "${name}"`;
+    document.getElementById('template-name-input').value = '';
+    _templateSavedThisSession = true;
+  } else {
+    msg.style.cssText='display:block;color:#ff7a5c';
+    msg.textContent = data.error || 'Failed to save template.';
+  }
+}
