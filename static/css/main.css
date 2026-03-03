@@ -996,3 +996,164 @@ select.form-input { cursor: pointer; }
 
 /* ── Divider ────────────────────────────────────────────────── */
 .divider { height:1px; background:var(--border); margin:16px 0; }
+
+/* ── Live session: editable set table ──────────────────────── */
+.set-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+.set-table thead th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 4px 8px;
+  text-align: center;
+}
+.set-table thead th:first-child { text-align: left; padding-left: 0; }
+.set-table tbody tr { border-top: 1px solid var(--border); }
+.set-table tbody tr:first-child { border-top: none; }
+.set-table td { padding: 6px 4px; vertical-align: middle; text-align: center; }
+.set-table td:first-child { text-align: left; }
+
+.set-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--accent);
+  width: 28px;
+  padding-left: 0 !important;
+}
+
+.set-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 4px;
+  width: 62px;
+  transition: border-color .15s;
+}
+.set-input:focus { outline: none; border-color: var(--accent); }
+
+.set-actions { width: 56px; white-space: nowrap; }
+.btn-save-set {
+  background: rgba(200,241,53,.12);
+  border: 1px solid rgba(200,241,53,.3);
+  border-radius: 5px;
+  color: var(--accent);
+  font-size: 13px;
+  padding: 4px 7px;
+  cursor: pointer;
+  margin-right: 2px;
+  transition: background .15s;
+}
+.btn-save-set:hover { background: rgba(200,241,53,.25); }
+.btn-del-set {
+  background: rgba(255,107,74,.1);
+  border: 1px solid rgba(255,107,74,.25);
+  border-radius: 5px;
+  color: #ff7a5c;
+  font-size: 13px;
+  padding: 4px 7px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-del-set:hover { background: rgba(255,107,74,.25); }
+
+/* ── History: per-exercise table ────────────────────────────── */
+.history-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 4px 0 10px;
+}
+.hist-exercise {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.hist-ex-name {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hist-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.hist-table thead th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 6px 6px;
+  text-align: center;
+}
+.hist-table thead th:first-child { text-align: left; padding-left: 0; }
+.hist-table tbody tr { border-top: 1px solid var(--border); }
+.hist-table tbody tr:first-child { border-top: none; }
+.hist-table td { padding: 7px 6px; text-align: center; font-size: 14px; }
+.hist-table td:first-child { text-align: left; padding-left: 0; }
+.hist-table td strong { color: var(--text); font-weight: 700; }
+.hist-note {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  font-style: italic;
+  text-align: left !important;
+  padding-top: 2px !important;
+}
+
+/* ── btn-icon ────────────────────────────────────────────────── */
+.btn-icon {
+  padding: 10px 14px !important;
+  font-size: 16px;
+}
+
+/* ── Template preview: exercise block ───────────────────────── */
+.tpl-ex-preview {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.tpl-ex-preview-name {
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+/* ── History badge ──────────────────────────────────────────── */
+.tpl-history-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(200,241,53,.1);
+  color: var(--accent);
+  border: 1px solid rgba(200,241,53,.2);
+}
+.tpl-history-badge.tpl-history-new {
+  background: rgba(255,255,255,.05);
+  color: var(--muted);
+  border-color: var(--border);
+}

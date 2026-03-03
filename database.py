@@ -69,6 +69,7 @@ def init_db():
             started_at      DATETIME NOT NULL DEFAULT (datetime('now')),
             ended_at        DATETIME,
             calories_burned REAL,
+            template_id     INTEGER REFERENCES session_template(id) ON DELETE SET NULL,
             notes           TEXT
         );
 
@@ -156,6 +157,7 @@ def init_db():
     for table, col, typ in [
         ("workout_session", "calories_burned", "REAL"),
         ("workout_session", "ended_at",        "DATETIME"),
+        ("workout_session", "template_id",     "INTEGER"),
     ]:
         try:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")

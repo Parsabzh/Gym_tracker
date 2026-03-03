@@ -186,3 +186,30 @@ def delete_cardio(cid):
     conn.execute("DELETE FROM cardio_log WHERE id=? AND user_id=?", (cid, session["user_id"]))
     conn.commit(); conn.close()
     return jsonify({"ok": True})
+
+
+@workout_bp.route("/api/sets/<int:set_id>", methods=["PATCH"])
+@login_required
+def update_set(set_id):
+    data = request.json
+    conn = get_db()
+    # Verify ownership
+    row = conn.execute("""
+        SELECT ws.id FROM workout_set ws
+        JOIN workout_session s ON s.id = ws.session_id
+        WHERE ws.id=? AND s.user_id=?
+    """, (set_id, session["user_id"])).fetchone()
+    if not row:
+        conn.close(); return jsonify({"error": "Forbidden"}), 403
+
+    fields, vals = [], []
+    for col in ("reps", "weight_kg", "rest_seconds", "rpe", "notes"):
+        if col in data:
+            fields.append(f"{col}=?")
+            vals.append(data[col])
+    if fields:
+        vals.append(set_id)
+        conn.execute(f"UPDATE workout_set SET {', '.join(fields)} WHERE id=?", vals)
+        conn.commit()
+    conn.close()
+    return jsonify({"ok": True})

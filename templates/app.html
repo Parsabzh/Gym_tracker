@@ -322,10 +322,35 @@
       <div class="divider"></div>
       <div class="card-title" style="margin-bottom:10px">Exercises</div>
       <div id="new-tpl-exercises"></div>
+
+      <!-- Add existing exercise row -->
       <div class="set-grid-2" style="margin-top:8px">
         <select id="new-tpl-ex-select" class="form-input"></select>
         <button class="btn-ghost" onclick="addTplExercise()">+ Add</button>
       </div>
+
+      <!-- Inline custom exercise creator -->
+      <button class="btn-ghost btn-sm w-full" style="margin-top:8px;color:var(--muted)"
+        onclick="toggleTplNewEx()">+ Create New Custom Exercise</button>
+      <div id="tpl-new-ex-form" style="display:none;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px">
+        <div class="form-group">
+          <label class="form-label">Exercise Name *</label>
+          <input type="text" id="tpl-ex-name" class="form-input" placeholder="e.g. Bulgarian Split Squat">
+        </div>
+        <div class="set-grid-2">
+          <div class="form-group">
+            <label class="form-label">Muscle Group</label>
+            <input type="text" id="tpl-ex-muscle" class="form-input" placeholder="Legs">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Equipment</label>
+            <input type="text" id="tpl-ex-equip" class="form-input" placeholder="Dumbbell">
+          </div>
+        </div>
+        <div id="tpl-ex-error" class="alert-error" style="display:none;margin-bottom:8px"></div>
+        <button class="btn-primary w-full" onclick="createAndAddTplExercise()">Create &amp; Add to Template</button>
+      </div>
+
       <div id="new-tpl-error" class="alert-error" style="display:none;margin-top:8px"></div>
       <button class="btn-primary w-full" style="margin-top:16px" onclick="createTemplate()">Create Template</button>
     </div>
